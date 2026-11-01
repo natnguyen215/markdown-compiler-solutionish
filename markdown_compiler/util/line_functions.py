@@ -28,11 +28,18 @@ def _pair(line, delim, open_tag, close_tag):
 
 
 def compile_headers(line):
-    return line
+    level = 0
+    while level < len(line) and line[level] == '#':
+        level += 1
+    if level == 0:
+        return line
+    return f'<h{level}>{line[level:]}</h{level}>'
 
 
 def compile_italic_star(line):
-    return line
+    if line.count('*') < 2:
+        return line
+    return _pair(line, '*', '<i>', '</i>')
 
 
 def compile_italic_underscore(line):
@@ -44,7 +51,9 @@ def compile_strikethrough(line):
 
 
 def compile_bold_stars(line):
-    return line
+    if line.count('**') < 2:
+        return line
+    return _pair(line, '**', '<b>', '</b>')
 
 
 def compile_bold_underscore(line):
@@ -85,4 +94,13 @@ def compile_links(line):
 
 
 def compile_images(line):
-    return line
+    out = line
+    while '![' in out and '](' in out:
+        i = out.find('![')
+        j = out.find('](', i)
+        k = out.find(')', j)
+        if j < 0 or k < 0:
+            break
+        out = out[:i] + f'<img src="{out[j+2:k]}" alt="{out[i+2:j]}" />' + out[k+1:]
+    return out
+
